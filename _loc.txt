@@ -1,0 +1,17 @@
+﻿=== <body
+'}\nhtml.fp-start #welcome{display:none !important;}\n\n</head>\n<body>\n<div id="paintFx" aria-hidde'
+'</i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>\n<body>\n\n  <div id="view-home" class'
+=== </body
+'ick", function(){ running = false; });\n  }\n})();\n</script>\n\n</body>\n  </div>\n  </div>\n\n<div id="'
+'ick", function(){ running = false; });\n  }\n})();\n</script>\n\n</body>\n</html>\n\n\n  <script>\n  (func'
+"= 'none'; }\n    window.scrollTo(0, 0);\n  }\n})();\n</script>\n\n</body>\n</html>\n"
+=== <html
+'<!DOCTYPE html>\n<html lang="zh-CN">\n<head>\n<meta ch'
+=== </html
+'nction(){ running = false; });\n  }\n})();\n</script>\n\n</body>\n</html>\n\n\n  <script>\n  (function(){\n'
+'; }\n    window.scrollTo(0, 0);\n  }\n})();\n</script>\n\n</body>\n</html>\n'
+=== entry-wipe
+'01;background:#fff;visibility:hidden;overflow:hidden;}\nhtml.entry-wipe #wipeFx{visibility:visible;}\n'
+=== from=footprint
+'eturn;\n  if (welcomeEl.style.display === "none") return; // from=footprint 直接跳过\n  var canvas = document.'
+', 4);\n  };\n  // V3.2 卡顿修复：从足迹页返回时不启动 WebGL 渲染循环\n  if (!/[?&]from=footprint/.test(window.location.search)'
