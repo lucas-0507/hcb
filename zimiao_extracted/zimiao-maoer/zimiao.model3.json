@@ -1,0 +1,18 @@
+{
+	"Version": 3,
+	"FileReferences": {
+		"Moc": "zimiao.moc3",
+		"Textures": [
+			"zimiao.1024/texture_00.png"
+		],
+		"Physics": "zimiao.physics3.json",
+		"DisplayInfo": "zimiao.cdi3.json"
+	},
+	"Groups": [
+		{
+			"Target": "Parameter",
+			"Name": "EyeBlink",
+			"Ids": []
+		}
+	]
+}

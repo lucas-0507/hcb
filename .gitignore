@@ -20,18 +20,8 @@ index4.7.html
 footprint*.html
 足迹导出到Supabase.html
 # 仅站主本地使用（访客用不到；照片已内嵌/上云）
-fp1.jpg
-fp2.jpg
-fp3.jpg
-fp4.jpg
-fp5.jpg
-fp6.jpg
-fp7.jpg
-fp8.jpg
 # 源图与 Live2D 模型源目录（页面已 base64 内嵌）
 番剧图片_无水印/
-玉子/
-zimiao_extracted/
 # 数据库设置脚本（本地留档）
 *.sql
 
