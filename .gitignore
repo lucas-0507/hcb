@@ -6,3 +6,31 @@ __pycache__/
 *.tmp
 # v1 时代纯备份（留档不发布）
 _backup/
+# 历史版本页面（只发布 index4.8）
+index2.*.html
+index3.*.html
+index4.0.html
+index4.1.html
+index4.2.html
+index4.3.html
+index4.4.html
+index4.5.html
+index4.6.html
+index4.7.html
+footprint*.html
+足迹导出到Supabase.html
+# 仅站主本地使用（访客用不到；照片已内嵌/上云）
+fp1.jpg
+fp2.jpg
+fp3.jpg
+fp4.jpg
+fp5.jpg
+fp6.jpg
+fp7.jpg
+fp8.jpg
+# 源图与 Live2D 模型源目录（页面已 base64 内嵌）
+番剧图片_无水印/
+玉子/
+zimiao_extracted/
+# 数据库设置脚本（本地留档）
+*.sql
