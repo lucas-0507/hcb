@@ -34,3 +34,18 @@ fp8.jpg
 zimiao_extracted/
 # 数据库设置脚本（本地留档）
 *.sql
+
+# 发布清理（只发 v4.8）
+_loc.txt
+_shots34/
+_wm_tmp/
+_v42d_fab.jpg
+*.rar
+avatar_hcb.jpg
+index1.93.html
+index2.0.html
+index2.5.html
+index3.4.html
+footprint1.93.html
+footprint2.0.html
+anime/微信图片_*
