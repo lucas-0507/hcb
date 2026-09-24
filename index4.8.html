@@ -1962,6 +1962,41 @@ html.entry-wipe #wipeFx{visibility:visible;}
     }
     function yuzuModelUrl(){ return "玉子/yuzi-1.model3.json"; }
     function azusaModelUrl(form){ var P = { normal: "zimiao_extracted/zimiao-zhengchang/zimiao.model3.json", maoer: "zimiao_extracted/zimiao-maoer/zimiao.model3.json" }; return P[form] || P.normal; }
+    /* V4.8.1：外部模型资源全部转成 blob URL 后再交给 oml2d——
+       与历史 base64 内嵌版走同一条 blob 加载路径，避免线上外部 URL 加载被中止导致 canvas 0x0 */
+    function blobModelUrl(modelUrl, cb){
+      var tryFetch = function(url, ms){ return new Promise(function(res, rej){ var t = setTimeout(function(){ rej(new Error("timeout")); }, ms); fetch(url).then(function(r){ clearTimeout(t); res(r); }).catch(function(e){ clearTimeout(t); rej(e); }); }); };
+      (async function(){
+        try {
+          var absUrl = (function(){ try { return new URL(modelUrl, document.baseURI || location.href).href; } catch(e){ return modelUrl; } })();
+          var res = await tryFetch(absUrl, 12000);
+          if (!res.ok) throw new Error("model3 " + res.status);
+          var json = await res.json();
+          var base = new URL(".", absUrl).href;
+          var cache = {};
+          async function grab(p){
+            if (!p) return p;
+            if (cache[p]) return cache[p];
+            var r = await tryFetch(new URL(p, base).href, 15000);
+            if (!r.ok) throw new Error("asset " + r.status);
+            var b = await r.blob();
+            var u = URL.createObjectURL(b);
+            cache[p] = u;
+            return u;
+          }
+          var fr = json.FileReferences;
+          fr.Moc = await grab(fr.Moc);
+          var txs = [];
+          for (var i = 0; i < (fr.Textures || []).length; i++) txs.push(await grab(fr.Textures[i]));
+          fr.Textures = txs;
+          if (fr.Physics) fr.Physics = await grab(fr.Physics);
+          if (fr.Physics3) fr.Physics3 = await grab(fr.Physics3);
+          if (fr.Cdi) fr.Cdi = await grab(fr.Cdi);
+          var nb = new Blob([JSON.stringify(json)], { type: "application/json" });
+          cb(URL.createObjectURL(nb));
+        } catch(e){ cb(modelUrl); }
+      })();
+    }
 
     /* ── 状态与事件管理 ── */
     var MAID = { cur: null, bubble: null, btn: null, interval: null, idleTimer: null, bTimer: null, show: null, handlers: [] };
@@ -2026,10 +2061,11 @@ html.entry-wipe #wipeFx{visibility:visible;}
 
     /* ═══ 玉子（主页） ═══ */
     function loadYuzu(){
+      blobModelUrl(yuzuModelUrl(), function(path){
       try {
         OML2D.loadOml2d({
           dockedPosition: "right",
-          models: [{ path: yuzuModelUrl(), position: [0, 0], scale: 0.12, stageStyle: { width: 280, height: 480, background: "transparent" } }],
+          models: [{ path: path, position: [0, 0], scale: 0.12, stageStyle: { width: 280, height: 480, background: "transparent" } }],
           tips: {
             idleTips: { wordTheDay: false, message: [], duration: 5000, interval: 999999, priority: 2 },
             welcomeTips: { message: { daybreak: "", morning: "", noon: "", afternoon: "", dusk: "", night: "", lateNight: "", weeHours: "" }, duration: 0, priority: 3 },
@@ -2043,12 +2079,13 @@ html.entry-wipe #wipeFx{visibility:visible;}
         for (var i = 0; i < ids.length; i++){ var el = document.getElementById(ids[i]); if (el) el.style.display = "none"; }
         bindYuzu();
       }, 700);
+      });
     }
     function bindYuzu(){
       var stageCanvas = findMaidCanvas();
-      if (!stageCanvas) return;
+      if (!stageCanvas){ setTimeout(bindYuzu, 500); return; }
       var stage = stageCanvas.parentElement;
-      if (!stage) return;
+      if (!stage){ setTimeout(bindYuzu, 500); return; }
       stage.style.position = "fixed";
       stage.style.zIndex = "90";
       stage.style.transition = "transform .8s cubic-bezier(.22,1,.36,1)";
@@ -2207,9 +2244,10 @@ html.entry-wipe #wipeFx{visibility:visible;}
 
     /* ═══ 阿梓喵（足迹） ═══ */
     function loadAzusa(form){
+      blobModelUrl(azusaModelUrl(form), function(path){
       try {
         OML2D.loadOml2d({
-          models: [{ path: azusaModelUrl(form), position: [0, 0], scale: 0.12, stageStyle: { width: 280, height: 480, background: "transparent" } }],
+          models: [{ path: path, position: [0, 0], scale: 0.12, stageStyle: { width: 280, height: 480, background: "transparent" } }],
           tips: {
             idleTips: { wordTheDay: false, message: [], duration: 1, interval: 999999, priority: 0 },
             welcomeTips: { message: { daybreak: "", morning: "", noon: "", afternoon: "", dusk: "", night: "", lateNight: "" }, interval: 999999 },
@@ -2223,6 +2261,7 @@ html.entry-wipe #wipeFx{visibility:visible;}
         for (var i = 0; i < ids.length; i++){ var el = document.getElementById(ids[i]); if (el) el.style.display = "none"; }
         bindAzusa();
       }, 700);
+      });
     }
     function bindAzusa(){
       var D = {
@@ -2243,9 +2282,9 @@ html.entry-wipe #wipeFx{visibility:visible;}
       };
       function pick(type){ var l = D[currentForm][type]; return l[Math.floor(Math.random() * l.length)]; }
       var stageCanvas = findMaidCanvas();
-      if (!stageCanvas) return;
+      if (!stageCanvas){ setTimeout(bindAzusa, 500); return; }
       var st = stageCanvas.parentElement;
-      if (!st) return;
+      if (!st){ setTimeout(bindAzusa, 500); return; }
       st.style.position = "fixed";
       st.style.zIndex = "90";
       st.style.transition = "transform .8s cubic-bezier(.22,1,.36,1)";
@@ -3562,7 +3601,6 @@ void main() {
       <div class="fp-tools">
         <button class="fp-manage-btn" id="fpManageBtn" type="button">管理</button>
         <button class="fp-write-btn" id="fpWriteBtn" type="button">写足迹</button>
-        <button class="fp-write-btn" id="fpUploadBtn" type="button">上传到云端</button>
       </div>
       <div class="fp-editor" id="fpEditor">
         <h3 id="fpEditorTitle">写足迹</h3>
@@ -3577,7 +3615,7 @@ void main() {
         </div>
       </div>
       <div class="fp-list" id="fpList"></div>
-      <p class="fp-tip">足迹已接入云端共享（访客只读）。点「上传到云端」把本地新增足迹同步给所有人；本地仍保留一份。</p>
+      <p class="fp-tip">足迹发布即自动同步云端（站主专属，访客只读）。点「管理」输入口令后即可写足迹；历史本地足迹会在认证时自动补传。</p>
     </div>
   </section>
 
@@ -3865,6 +3903,8 @@ void main() {
 
     // ---------- 事件 ----------
     manageBtn.addEventListener("click", function(){
+      /* V4.8.2：写足迹仅站主可用——进入管理模式前先口令认证（认证一次记住，发布自动同步云端） */
+      if (window.__fpAuth && !window.__fpAuth()) return;
       manageMode = !manageMode;
       manageBtn.classList.toggle("on", manageMode);
       writeBtn.classList.toggle("show", manageMode);
@@ -4175,13 +4215,31 @@ window.startBrushErase = function(fx){
       });
       cb(true);
     }
-    client.from("footprints").select("*").order("created_at", {ascending: false}).limit(60)
-      .then(function(res){
-        cloudRows = (res.error || !res.data) ? [] : res.data;
-        finish();
-      })
-      .catch(function(){ cloudRows = []; finish(); });
-  };  };
+    (function query(retries){
+      var done = false;
+      var tm = setTimeout(function(){ done = true; cloudRows = []; finish(); }, 14000);
+      client.from("footprints").select("*").order("created_at", {ascending: false}).limit(60)
+        .then(function(res){
+          if (done) return;
+          clearTimeout(tm);
+          if (res.error || !res.data || !res.data.length){
+            cloudRows = [];
+            if (retries > 0){ query(retries - 1); return; }
+            finish();
+          } else {
+            cloudRows = res.data;
+            finish();
+          }
+        })
+        .catch(function(){
+          if (done) return;
+          clearTimeout(tm);
+          cloudRows = [];
+          if (retries > 0){ query(retries - 1); return; }
+          finish();
+        });
+    })(1);
+  };
 })();
 </script>
 <style>
@@ -4477,19 +4535,25 @@ window.startBrushErase = function(fx){
     });
   };
 
-  /* 「上传到云端」按钮：事件委托绑定 */
-  function onUpload(){
-    var pw = prompt("输入上传口令（站主专用）");
-    if (pw === null) return;
-    if (pw !== KEY){ alert("口令错误"); return; }
+  /* V4.8.2：站主口令认证（合并「上传到云端」入口）——
+     认证一次记住；成功后自动把历史本地足迹补传到云端，此后发布足迹自动同步 */
+  window.__fpAuth = function(){
+    if (localStorage.getItem("hcbFpAuthed") === "1") return true;
+    var pw = prompt("输入站主口令");
+    if (pw === null) return false;
+    if (pw !== KEY){ alert("口令错误"); return false; }
     localStorage.setItem("hcbFpAuthed", "1");   // 记住认证：以后发布足迹自动同步云端
-    if (!window.supabase || !window.__SB_CONFIG){ alert("需要联网（Supabase 未加载）。"); return; }
-    var client = window.__sbClient || window.supabase.createClient(window.__SB_CONFIG.url, window.__SB_CONFIG.key);
-    restoreSeedPhotos(function(ok, total){
-      if (total && ok) fpToast("已恢复 " + ok + "/" + total + " 张历史照片，继续上传");
-      runUpload(client);
-    });
-  }
+    if (window.supabase && window.__SB_CONFIG){
+      var client = window.__sbClient || window.supabase.createClient(window.__SB_CONFIG.url, window.__SB_CONFIG.key);
+      restoreSeedPhotos(function(ok, total){
+        if (total && ok) fpToast("已恢复 " + ok + "/" + total + " 张历史照片");
+        runUpload(client);
+      });
+    } else {
+      alert("需要联网（Supabase 未加载）。");
+    }
+    return true;
+  };
   function runUpload(client){
     var IDB = window.indexedDB || window.webkitIndexedDB;
     if (!IDB){ alert("本地数据库不可用"); return; }
@@ -4607,10 +4671,6 @@ window.startBrushErase = function(fx){
       }).catch(function(){ alert("上传失败，请稍后再试。"); });
     }
   }
-  document.addEventListener("click", function(e){
-    var t = e.target;
-    if (t && (t.id === "fpUploadBtn" || (t.parentNode && t.parentNode.id === "fpUploadBtn"))) onUpload();
-  });
 })();
 </script>
 </body>
